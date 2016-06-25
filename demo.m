@@ -4,7 +4,7 @@ if( ~checkToolboxes(reqToolboxes) )
  error('detectFaceParts requires: Computer Vision System Toolbox and Image Processing Toolbox. Please install these toolboxes.');
 end
 
-img = imread('face3.jpg');
+img = imread('face1.jpg');
 
 detector = buildDetector();
 [bbox bbimg faces bbfaces] = detectFaceParts(detector,img,2);
