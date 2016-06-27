@@ -1,4 +1,4 @@
-function Op = seam_search(I, filename)
+function [Op, mak, cen] = seam_search(I, filename)
     
     function [c, n] = elipse(x, y, x0, y0, a, b, r)
         
@@ -126,5 +126,7 @@ function Op = seam_search(I, filename)
     Op(:,:,1) = uint8(mak) .* I(:,:,1);
     Op(:,:,2) = uint8(mak) .* I(:,:,2);
     Op(:,:,3) = uint8(mak) .* I(:,:,3);
+    
+    cen = round(cen);
     
 end
