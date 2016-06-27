@@ -13,7 +13,7 @@ function Op = seam_search(I, filename)
     end
     
     
-    function [mask, num, mi_ta] = region(I, filename)
+    function [mask, num, mi_ta, cen] = region(I, filename)
         [n, m, ~] = size(I);
         mask = zeros([n, m, 1]);
         
@@ -22,6 +22,8 @@ function Op = seam_search(I, filename)
         
         cx = P(2, 1);
         cy = P(1, 1);
+        
+        cen = [cx, cy];
         
         minix = 0;
         miniy = 0;
@@ -83,7 +85,14 @@ function Op = seam_search(I, filename)
     %I eh a imagem
     %land sao os landmarks
     
-    [mask, num, mintam] = region(I, filename);
+    [mask, num, mintam, cen] = region(I, filename);
+    
+    for k = cen(1):-1:1
+        if mask(k, cen(2)) == 1
+            mask(k, cen(2) = 0;
+            pont_ini = [k, cen(2)];
+	end
+    end
     
     mat = zeros([num, 8]);
     
@@ -114,9 +123,7 @@ function Op = seam_search(I, filename)
             end
         end
     end
-    %figure; imshow(mat, []);
-    %figure; imshow(double(vis), []);
-    
-    djikstra(mat, 1, );
+    figure; imshow(mat, []);
+    figure; imshow(double(vis), []);
     
 end
