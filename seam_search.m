@@ -64,7 +64,7 @@ function Op = seam_search(I, filename)
         
         [mask, num] = elipse(x, y, cx, cy, minix, miniy, 1.6);
         figure; imshow(mask);
-        [temp, ntemp] = elipse(x, y, cx, cy, minix, miniy, 1.0);
+        [temp, ntemp] = elipse(x, y, cx, cy, minix, miniy, 1.2);
         figure; imshow(temp);
         
         mask = (mask | temp) & ~(mask & temp);
