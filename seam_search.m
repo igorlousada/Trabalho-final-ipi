@@ -79,75 +79,50 @@ function Op = seam_search(I, filename)
         end
     end
     
-    function q = grad(I, x, y, z, w)
-        Ia = double(I(x,y,1)) + double(I(x,y,2)) + double(I(x,y,3));
-        Ib = double(I(z,w,1)) + double(I(z,w,2)) + double(I(z,w,3));
-        %Mudar pra outro espaco de cores
-        q = abs(Ib - Ia);
-    end
-    
     %I eh a imagem
     %land sao os landmarks
     
     [mask, num, mintam, cen] = region(I, filename, 2);
     
-    mak = mask;
-    
-    for k = round(cen(1)):-1:1
+    for k = 1:round(cen(1))
         if mask(k, round(cen(2))) == 1
             mask(k, round(cen(2))) = 0;
             ini = [k, round(cen(2))];
         end
     end
     
+    if mask(ini(1), ini(2) - 1) == 1
+        beg = [ini(1), ini(2) - 1];
+    else
+        beg = [ini(1) - 1, ini(2) - 1];
+    end
+    if mask(ini(1), ini(2) + 1) == 1
+        endi = [ini(1), ini(2) + 1];
+    else
+        endi = [ini(1) - 1, ini(2) + 1];
+    end
+    
     figure; imshow(mask);
     
-    %mat = zeros([num, 8]);
+    beg = int16(beg);
+    endi = int16(endi);
     
-    %[lin, col] = size(mask);
-    %vis = zeros([lin, col]);
-    %fim = 1;
+    mask(beg(1), beg(2))
+    mask(endi(1), endi(2))
     
-    %vet = size([num, 2]);
+    route =  djikstra(beg, endi, rgb2gray(I), mask);
     
-    %v8_x = [-1, -1, -1,  0, 0,  1, 1, 1];
-    %v8_y = [-1,  0,  1, -1, 1, -1, 0, 1];
+    route(ini(1), ini(2)) = 1;
+    figure; imshow(route, []);
     
-    %for k = 1:lin
-    %    for l = 1:col
-    %        if mask(k, l) == 1
-    %            vet(fim, 1) = k;
-    %            vet(fim, 2) = l;
-    %            vis(k, l) = fim;
-    %            
-    %            for a = 1:8
-    %                if vis(k + v8_x(a), l + v8_y(a)) ~= 0
-    %                    tem = vis(k + v8_x(a), l + v8_y(a));
-    %                    mat(fim, a) = grad(I, k, l, k + v8_x(a), l + v8_y(a));
-    %                    mat(tem, 8 - a + 1) = mat(fim, a);
-    %                end
-    %            end
-    %            fim = fim + 1;
-    %        end
-    %    end
-    %end
-    %figure; imshow(mat, []);
-    %figure; imshow(double(vis), [])
+    mask = route;
     
-    if mask(ini(1) - 1, ini(2)) == 1
-        beg = [ini(1) - 1, ini(2)]
-    else
-        beg = [ini(1) - 1, ini(2) + 1]
-    end
-    if mask(ini(1) + 1, ini(2)) == 1
-        endi = [ini(1) + 1, ini(2)]
-    else
-        endi = [ini(1) + 1, ini(2) + 1]
-    end
-    [a, b, ~] = size(rgb2gray(I));
-    %[cost, route] = djikstra(beg, end, rgb2gray(I), v8_x, v8_y);
+    mak = mask;
     
     mak = imfill(mak, 'holes');
+    
+    figure; imshow(mak);
+    
     Op(:,:,1) = uint8(mak) .* I(:,:,1);
     Op(:,:,2) = uint8(mak) .* I(:,:,2);
     Op(:,:,3) = uint8(mak) .* I(:,:,3);
