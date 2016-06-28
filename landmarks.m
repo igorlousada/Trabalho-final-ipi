@@ -2,8 +2,6 @@
 
 function P = landmarks(I, fname)
     
-    close all;
-    
     detector = vision.CascadeObjectDetector;
     box = step(detector, I);
     
@@ -20,7 +18,7 @@ function P = landmarks(I, fname)
     bbox = dlmread([fname]);
     
     % image output
-    figure(1);
+    figure;
     imshow(I, [], 'Border', 'tight'); hold on;
     % plotbox(bbox);
 
@@ -30,8 +28,9 @@ function P = landmarks(I, fname)
         % show landmarks 
         comps = ['S0'; 'S1'; 'S2'; 'S3'; 'S4'; 'S5'; 'S6'; 'S7'];
         plot(P(1, 1), P(2, 1), 'bs', 'LineWidth', 1, 'MarkerSize', 5, 'MarkerFaceColor', 'b');
-        %text(P(1, 1)+1, P(2, 1)+1, comps(1,:), 'color', 'b', 'FontSize', 12);
+        text(P(1, 1)+1, P(2, 1)+1, comps(1,:), 'color', 'b', 'FontSize', 12);
         plot(P(1, 2:end), P(2, 2:end), 'rs', 'LineWidth', 1, 'MarkerSize', 5, 'MarkerFaceColor', 'r');
-        %text(P(1, 2:end)+1, P(2, 2:end)+1, comps(2:end,:), 'color', 'r', 'FontSize', 12);
+        text(P(1, 2:end)+1, P(2, 2:end)+1, comps(2:end,:), 'color', 'r', 'FontSize', 12);
     end;
+    hold off
 end

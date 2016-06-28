@@ -1,4 +1,4 @@
-function [Op, mak, cen] = seam_search(I, filename)
+function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt)
     
     function [c, n] = elipse(x, y, x0, y0, a, b, r)
         
@@ -13,41 +13,41 @@ function [Op, mak, cen] = seam_search(I, filename)
     end
     
     
-    function [mask, num, mi_ta, cen] = region(I, filename, op)
+    function [mask, num, mi_ta, cen, minix, miniy] = region(I, filename, op)
         [n, m, ~] = size(I);
         mask = zeros([n, m, 1]);
         
-        P = landmarks(I, filename);
+        P = landmarks(I, filename)
         [~, j] = size(P);
         
-        cx = P(2, 1);
-        cy = P(1, 1);
+        cx = P(1, 1);
+        cy = P(2, 1);
         
-        cen = [cx, cy];
+        cen = [cy, cx]
         
         minix = 0;
         miniy = 0;
         
         for i = 2:j
-            if ((P(2, i) - cx)^2 >= minix^2)
-                minix = abs(P(2, i) - cx);
+            if ((P(1, i) - cx)^2 >= minix^2)
+                minix = abs(P(1, i) - cx);
             end
-            if ((P(1, i) - cy)^2 >= miniy^2)
-                miniy = abs(P(1, i) - cy);
+            if ((P(2, i) - cy)^2 >= miniy^2)
+                miniy = abs(P(2, i) - cy);
             end
-        end
-        for i = 1:n
-            x(i, 1:m) = i;
         end
         for i = 1:m
-            y(1:n, i) = i;
+            x(1:n, i) = i;
+        end
+        for i = 1:n
+            y(i, 1:m) = i;
         end
         
         if op == 1
         
-        [mask, num] = square(x, y, cx, cy, 1.5 * minix, 1.5 * miniy);
+        [mask, num] = square(y, x, cy, cx, 1.4 * miniy, 1.4 * minix);
         figure; imshow(mask);
-        [temp, ntemp] = square(x, y, cx, cy, 1.2 * minix, 1.2 * miniy);
+        [temp, ntemp] = square(y, x, cy, cx, 1.2 * miniy, 1.2 * minix);
         figure; imshow(temp);
         mask = (mask | temp) & ~(mask & temp);
         num = num - ntemp;
@@ -55,16 +55,14 @@ function [Op, mak, cen] = seam_search(I, filename)
         mask2(:,:,2) = mask;
         mask2(:,:,3) = mask;
         mi_ta = 2 * 1.2 * minix + 2 * 1.2 * miniy;
-        figure; imshow(uint8(mask2) .* I); %pause;
+        figure; imshow(uint8(mask2) .* I);
         
         else
+        [miniy, minix]
         
-        minix = minix * 1.3;
-        miniy = miniy * 0.9;
-        
-        [mask, num] = elipse(x, y, cx, cy, minix, miniy, 1.6);
+        [mask, num] = elipse(y, x, cy, cx, miniy, minix, 1.5);
         figure; imshow(mask);
-        [temp, ntemp] = elipse(x, y, cx, cy, minix, miniy, 1.2);
+        [temp, ntemp] = elipse(y, x, cy, cx, miniy, minix, 1.3);
         figure; imshow(temp);
         
         mask = (mask | temp) & ~(mask & temp);
@@ -82,7 +80,7 @@ function [Op, mak, cen] = seam_search(I, filename)
     %I eh a imagem
     %land sao os landmarks
     
-    [mask, num, mintam, cen] = region(I, filename, 2);
+    [mask, num, mintam, cen, xa, yb] = region(I, filename, opt);
     
     for k = 1:round(cen(1))
         if mask(k, round(cen(2))) == 1
@@ -126,6 +124,8 @@ function [Op, mak, cen] = seam_search(I, filename)
     Op(:,:,1) = uint8(mak) .* I(:,:,1);
     Op(:,:,2) = uint8(mak) .* I(:,:,2);
     Op(:,:,3) = uint8(mak) .* I(:,:,3);
+    
+    figure; imshow(Op);
     
     cen = round(cen);
     
