@@ -21,24 +21,24 @@ function final = auto(face1, face2, opt, grad_type)
     P1 = landmarks(I1, det1);
     P2 = landmarks(I2, det2);
     
-    eye1_1 = [(P1(1, 2) + P1(1, 5)) / 2, (P1(2, 2) + P1(2, 5)) / 2];
-    eye1_2 = [(P2(1, 2) + P2(1, 5)) / 2, (P2(2, 2) + P2(2, 5)) / 2];
+    eye1_1 = [(P1(1, 2) + P1(1, 6)) / 2, (P1(2, 2) + P1(2, 6)) / 2]
+    eye2_1 = [(P1(1, 3) + P1(1, 7)) / 2, (P1(2, 3) + P1(2, 7)) / 2]
     
-    eye2_1 = [(P1(1, 3) + P1(1, 7)) / 2, (P1(2, 3) + P1(2, 7)) / 2];
-    eye2_2 = [(P2(1, 3) + P2(1, 7)) / 2, (P2(2, 3) + P2(2, 7)) / 2];
+    eye1_2 = [(P2(1, 2) + P2(1, 6)) / 2, (P2(2, 2) + P2(2, 6)) / 2]
+    eye2_2 = [(P2(1, 3) + P2(1, 7)) / 2, (P2(2, 3) + P2(2, 7)) / 2]
     
-    if eye1_2(1) - eye1_1(1) ~= 0
-        inc_1 = atan((eye1_2(2) - eye1_1(2)) / (eye1_2(1) - eye1_1(1)))
+    if eye2_1(1) - eye1_1(1) ~= 0
+        inc_1 = atan((eye2_1(2) - eye1_1(2)) / (eye2_1(1) - eye1_1(1)))
     else
-        inc_1 = 0;
+        inc_1 = 0
     end
-    if eye2_2(1) - eye2_1(1) ~= 0
-        inc_2 = atan((eye2_2(2) - eye2_1(2)) / (eye2_2(1) - eye2_1(1)))
+    if eye2_2(1) - eye1_2(1) ~= 0
+        inc_2 = atan((eye2_2(2) - eye1_2(2)) / (eye2_2(1) - eye1_2(1)))
     else
-        inc_2 = 0;
+        inc_2 = 0
+        
+        
     end
-    
-    close all;
     
     rot = 180 * (inc_2 - inc_1) / pi;
     
@@ -47,7 +47,6 @@ function final = auto(face1, face2, opt, grad_type)
     %% Cria mascara
     
     [Op, mak, cen2, x, y] = seam_search(I2, det2, opt, grad_type);
-    P1 = landmarks(I1, det1);
     
     %% Resize
     
@@ -94,7 +93,6 @@ function final = auto(face1, face2, opt, grad_type)
     [n, m, ~] = size(I1);
     [d, e, ~] = size(Op);
     
-    figure; imshow(I1);
     for i = 1:d
         for j = 1:e
             if mak(i, j) ~= 0

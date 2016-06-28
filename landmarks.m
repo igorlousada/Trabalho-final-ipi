@@ -2,10 +2,44 @@
 
 function P = landmarks(I, fname)
     
-    detector = vision.CascadeObjectDetector;
-    box = step(detector, I);
+    function d = search_int(I)
+        [a, b, ~] = size(I);
+        x_min = b;
+        y_min = a;
+        x_max = 0;
+        y_max = 0;
+        
+        for k = 1:a
+            for l = 1:b
+                if I(k, l, 1) ~= 0 || I(k, l, 2) ~= 0 || I(k, l, 3) ~= 0
+                    if k < y_min
+                        y_min = k;
+                    end
+                    if k > y_max
+                        y_max = k;
+                    end
+                    if l < x_min
+                        x_min = l;
+                    end
+                    if l > x_max
+                        x_max = l;
+                    end
+                end
+            end
+        end
+        d = [x_min, y_min, x_max, y_max];
+    end
     
-    bbox = [box(1, 1), box(1, 2), box(1, 1) + box(1, 3), box(1, 2) + box(1, 4)];
+    detector = vision.CascadeObjectDetector;
+    box = step(detector, I)
+    
+    [n, m] = size(box);
+    
+    if n == 0
+       bbox = search_int(I)
+    else
+        bbox = [box(1, 1), box(1, 2), box(1, 1) + box(1, 3), box(1, 2) + box(1, 4)];
+    end
     
     fid = fopen(fname, 'w');
     
@@ -31,6 +65,8 @@ function P = landmarks(I, fname)
         text(P(1, 1)+1, P(2, 1)+1, comps(1,:), 'color', 'b', 'FontSize', 12);
         plot(P(1, 2:end), P(2, 2:end), 'rs', 'LineWidth', 1, 'MarkerSize', 5, 'MarkerFaceColor', 'r');
         text(P(1, 2:end)+1, P(2, 2:end)+1, comps(2:end,:), 'color', 'r', 'FontSize', 12);
+        
+        pause;
     end;
     hold off
 end

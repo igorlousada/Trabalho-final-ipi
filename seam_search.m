@@ -45,9 +45,9 @@ function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt, grad_type)
         
         if op == 1
         
-        [mask, num] = square(y, x, cy, cx, 1.4 * miniy, 1.4 * minix);
+        [mask, num] = square(y, x, cy, cx, 1.4 * miniy, 1.6 * minix);
         figure; imshow(mask);
-        [temp, ntemp] = square(y, x, cy, cx, 1.2 * miniy, 1.2 * minix);
+        [temp, ntemp] = square(y, x, cy, cx, 1.2 * miniy, 1.4 * minix);
         figure; imshow(temp);
         mask = (mask | temp) & ~(mask & temp);
         num = num - ntemp;
@@ -74,6 +74,7 @@ function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt, grad_type)
         mask2(:,:,3) = mask;
         mi_ta = minix * miniy * pi;
         figure; imshow(uint8(mask2) .* I);
+        pause;
         end
     end
     
@@ -109,7 +110,7 @@ function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt, grad_type)
     mask(endi(1), endi(2))
     
     I_hsv = rgb2hsv(I);
-    figure; imshow(I_hsv(:,:,1));
+    figure; imshow(I_hsv(:,:,1)); pause;
     
     
     if grad_type == 0
@@ -137,5 +138,5 @@ function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt, grad_type)
     figure; imshow(Op);
     
     cen = round(cen);
-    
+    pause; close all;
 end
