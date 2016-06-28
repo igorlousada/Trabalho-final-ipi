@@ -1,4 +1,4 @@
-function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt)
+function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt, grad_type)
     
     function [c, n] = elipse(x, y, x0, y0, a, b, r)
         
@@ -108,7 +108,16 @@ function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt)
     mask(beg(1), beg(2))
     mask(endi(1), endi(2))
     
-    route =  djikstra(beg, endi, rgb2gray(I), mask);
+    I_hsv = rgb2hsv(I);
+    figure; imshow(I_hsv(:,:,1));
+    
+    
+    if grad_type == 0
+    
+        route =  djikstra(beg, endi, rgb2gray(I), mask);
+    else
+        route =  djikstra2(beg, endi, I_hsv(:,:,1), mask);
+    end
     
     route(ini(1), ini(2)) = 1;
     figure; imshow(route, []);

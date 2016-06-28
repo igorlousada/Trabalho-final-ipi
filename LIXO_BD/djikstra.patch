@@ -1,0 +1,443 @@
+diff --git a/Makefile b/Makefile
+index 0a19f97..505dcc8 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,4 @@
+-all: djikstra.o
++all: djikstra.o djikstra2.o
+ 
+ %.o: %.cpp
+ 	mex -largeArrayDims $< -output $@
+diff --git a/djikstra.cpp b/djikstra.cpp
+index a5a75ce..af1222b 100644
+--- a/djikstra.cpp
++++ b/djikstra.cpp
+@@ -7,65 +7,118 @@ using namespace std;
+ #define ff first
+ #define ss second
+ 
+-static const int v8_x[] = { -1, -1, -1, 0, 0, 1, 1, 1};
+-static const int v8_y[] = { -1, 0, 1, -1, 1, -1, 0, 1};
++static const int v8_x[] = { -1,  0, 0, 1};
++static const int v8_y[] = {  0, -1, 1, 0};
+ 
+ void djikstra(const mxArray *mx_beg, const mxArray *mx_endi, const mxArray *mx_I, const mxArray *mx_mask, mxArray *mx_route)
+ {
+-	const mwSize *siz;
+-	int nDims;
+-	uint8_t *beg, *endi, *I, *mask, *route;
++	const mwSize *siz, *siz_mask, *siz_beg, *siz_endi;
++	int nDims, nDims_mask, nDims_beg, nDims_endi;
++	int16_t *beg, *endi;
++	uint8_t  *I;
++	bool  *route, *mask;
+ 	nDims = (int)mxGetNumberOfDimensions(mx_I);
+ 	siz = mxGetDimensions(mx_I);
++	nDims_mask = (int)mxGetNumberOfDimensions(mx_mask);
++	siz_mask = mxGetDimensions(mx_mask);
++
++	if(nDims != 2) {
++		mexPrintf("Dim errado");
++		return;
++	}
++	mexPrintf("siz = [%d, %d]\n", siz[0], siz[1]);
++//return;
+ 
+-	beg = (uint8_t*)mxGetPr(mx_beg);
+-	endi = (uint8_t*)mxGetPr(mx_endi);
+ 	I = (uint8_t*)mxGetPr(mx_I);
+-	mask = (uint8_t*)mxGetPr(mx_mask);
+-	route = (uint8_t*)mxGetPr(mx_route);
++	mask = (bool*)mxGetPr(mx_mask);
++	
++	route = (bool*)mxGetPr(mx_route);
++	mexPrintf("Conseguiu imagens\n");
++	nDims_beg = (int)mxGetNumberOfDimensions(mx_beg);
++	siz_beg = mxGetDimensions(mx_beg);
++	beg = (int16_t*)mxGetPr(mx_beg);
++	nDims_endi = (int)mxGetNumberOfDimensions(mx_endi);
++	siz_endi = mxGetDimensions(mx_endi);
++	endi = (int16_t*)mxGetPr(mx_endi);
++	mexPrintf("Conseguiu abrir\n");
++
++	mexPrintf("%d, (%d, %d)\n", nDims, siz[1], siz[0]);
++	mexPrintf("%d, (%d, %d)\n", nDims_mask, siz_mask[1], siz_mask[0]);
++	mexPrintf("%d, (%d, %d)\n", nDims_beg, siz_beg[1], siz_beg[0]);
++	mexPrintf("%d, (%d, %d)\n", nDims_endi, siz_endi[1], siz_endi[0]);
+ 
+ 	priority_queue<pair<long long, pair<int, int> > > q;
+ 
+-	long long dist[siz[0]][siz[1]];
+-	int prev[siz[0]][siz[1]];
++	int x1, y1, x2, y2;
++	x1 = beg[1] - 1;
++	y1 = beg[0] - 1;
++	x2 = endi[1] - 1;
++	y2 = endi[0] - 1;
+ 
+-	for (int i = 0; i < siz[0]; i++)
+-		for (int j = 0; j < siz[1]; j++) {
++	long long dist[siz[1]][siz[0]];
++	int prev[siz[1]][siz[0]];
++	for (int i = 0; i < siz[1]; i++)
++		for (int j = 0; j < siz[0]; j++) {
+ 			dist[i][j] = 2e17;
+ 			prev[i][j] = 0;
++			route[i * siz[0] + j] = false;
+ 		}
+ 
+-	dist[beg[0]][beg[1]] = 0;
++	dist[x1][y1] = 0;
++//return;
++	mexPrintf("%d %d\n", beg[0], beg[1]);
++	mexPrintf("%d %d\n", endi[0], endi[1]);
++//return;
++
++	q.push(mp(0, mp(x1, y1)));
++//return;
++
++//	FILE *fp = fopen("teste", "w");
++//	for (int i = 0; i < siz[1]; i++) {
++//		for (int j = 0; j < siz[0]; j++) {
++//			fprintf(fp, "%d", mask[i * siz[0] + j]);
++//		}
++//	fprintf(fp, "\n");
++//	}
++//	fclose(fp);
++
+ 
+-	q.push(mp(0, mp(beg[0], beg[1])));
+ 
++	if (!mask[x2 * siz[0] + y2] || !mask[x2 * siz[0] + y2]) {
++		mexPrintf("Dados errados\n");
++		return;
++	}
+ 	while (!q.empty()) {
+ 
+ 		pair <long long, pair<int, int> > v = q.top(); q.pop();
++		//mexPrintf("(%d, (%d, %d))\n", v.ff, v.ss.ff, v.ss.ss);
+ 		int i = v.ss.ff;
+ 		int j = v.ss.ss;
+ 
+-		if (j == endi[0] && i == endi[1]) {
+-
++		if (i == x2 && j == y2) {
++			mexPrintf("Chegou\n");
+ 			while ((i != beg[0]) || (j != beg[1])) {
+ 				int t = i;
+-				route[i * siz[0] + j] = 1;
++				route[i * siz[0] + j] = true;
+ 				i -= v8_x[prev[i][j]];
+ 				j -= v8_y[prev[t][j]];
+ 			}
++			route[i * siz[0] + j] = true;
+ 
+ 			return;
+ 		}
+ 
+-		for (int a = 0; a < 8; a++) {
++		for (int a = 0; a < 4; a++) {
+ 			int newi = i + v8_x[a];
+ 			int newj = j + v8_y[a];
+-
++			//mexPrintf("(%d, %d)\n", newi, newj);
+ 			if (mask[newi * siz[0] + newj]) {
++			//mexPrintf("Yeah\n");
+ 				long long grad = abs(I[newi * siz[0] + newj] - I[i * siz[0] + j]);
+ 				if (dist[newi][newj] > v.ff + grad) {
+ 					dist[newi][newj] = v.ff + grad;
+ 					prev[newi][newj] = a;
++					//mexPrintf("push (%d, (%d, %d))\n", dist[newi][newj], newi, newj);
+ 					q.push(mp(dist[newi][newj], mp(newi, newj)));
+ 				}
+ 			}
+@@ -86,6 +139,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+ 		return;
+ 	}
+ 
++	int nDims = (int)mxGetNumberOfDimensions(prhs[3]);
++	const mwSize *siz = mxGetDimensions(prhs[3]);
++	plhs[0] = mxCreateNumericArray(2, siz, mxLOGICAL_CLASS, mxREAL);
++
+ 	djikstra(prhs[0], prhs[1], prhs[2], prhs[3], plhs[0]);
+ 
+ }
+diff --git a/djikstra.m b/djikstra.m
+deleted file mode 100644
+index 2fed9d4..0000000
+--- a/djikstra.m
++++ /dev/null
+@@ -1,2 +0,0 @@
+-function [cost, route] = djikstra
+-end
+\ No newline at end of file
+diff --git a/face.jpg b/face.jpg
+index a560d91..5a98da4 100644
+Binary files a/face.jpg and b/face.jpg differ
+diff --git a/face1.det b/face1.det
+index 9ba1521..89c7c91 100644
+--- a/face1.det
++++ b/face1.det
+@@ -1 +1 @@
+-82,141,494,553
++661,265,1921,1525
+diff --git a/face1.jpg b/face1.jpg
+index d44443d..f8a3e0c 100644
+Binary files a/face1.jpg and b/face1.jpg differ
+diff --git a/face2.jpg b/face2.jpg
+index 6d0e24c..cbc4735 100644
+Binary files a/face2.jpg and b/face2.jpg differ
+diff --git a/face3.jpg b/face3.jpg
+index 6099d47..d00c944 100644
+Binary files a/face3.jpg and b/face3.jpg differ
+diff --git a/landmarks.m b/landmarks.m
+index 15acb56..e98e3b0 100644
+--- a/landmarks.m
++++ b/landmarks.m
+@@ -2,8 +2,6 @@
+ 
+ function P = landmarks(I, fname)
+     
+-    close all;
+-    
+     detector = vision.CascadeObjectDetector;
+     box = step(detector, I);
+     
+@@ -20,7 +18,7 @@ function P = landmarks(I, fname)
+     bbox = dlmread([fname]);
+     
+     % image output
+-    figure(1);
++    figure;
+     imshow(I, [], 'Border', 'tight'); hold on;
+     % plotbox(bbox);
+ 
+@@ -30,8 +28,9 @@ function P = landmarks(I, fname)
+         % show landmarks 
+         comps = ['S0'; 'S1'; 'S2'; 'S3'; 'S4'; 'S5'; 'S6'; 'S7'];
+         plot(P(1, 1), P(2, 1), 'bs', 'LineWidth', 1, 'MarkerSize', 5, 'MarkerFaceColor', 'b');
+-        %text(P(1, 1)+1, P(2, 1)+1, comps(1,:), 'color', 'b', 'FontSize', 12);
++        text(P(1, 1)+1, P(2, 1)+1, comps(1,:), 'color', 'b', 'FontSize', 12);
+         plot(P(1, 2:end), P(2, 2:end), 'rs', 'LineWidth', 1, 'MarkerSize', 5, 'MarkerFaceColor', 'r');
+-        %text(P(1, 2:end)+1, P(2, 2:end)+1, comps(2:end,:), 'color', 'r', 'FontSize', 12);
++        text(P(1, 2:end)+1, P(2, 2:end)+1, comps(2:end,:), 'color', 'r', 'FontSize', 12);
+     end;
++    hold off
+ end
+\ No newline at end of file
+diff --git a/seam_search.m b/seam_search.m
+index 440f860..4a7fbeb 100644
+--- a/seam_search.m
++++ b/seam_search.m
+@@ -1,4 +1,4 @@
+-function Op = seam_search(I, filename)
++function [Op, mak, cen, xa, yb] = seam_search(I, filename, opt)
+     
+     function [c, n] = elipse(x, y, x0, y0, a, b, r)
+         
+@@ -13,41 +13,41 @@ function Op = seam_search(I, filename)
+     end
+     
+     
+-    function [mask, num, mi_ta, cen] = region(I, filename, op)
++    function [mask, num, mi_ta, cen, minix, miniy] = region(I, filename, op)
+         [n, m, ~] = size(I);
+         mask = zeros([n, m, 1]);
+         
+-        P = landmarks(I, filename);
++        P = landmarks(I, filename)
+         [~, j] = size(P);
+         
+-        cx = P(2, 1);
+-        cy = P(1, 1);
++        cx = P(1, 1);
++        cy = P(2, 1);
+         
+-        cen = [cx, cy];
++        cen = [cy, cx]
+         
+         minix = 0;
+         miniy = 0;
+         
+         for i = 2:j
+-            if ((P(2, i) - cx)^2 >= minix^2)
+-                minix = abs(P(2, i) - cx);
++            if ((P(1, i) - cx)^2 >= minix^2)
++                minix = abs(P(1, i) - cx);
+             end
+-            if ((P(1, i) - cy)^2 >= miniy^2)
+-                miniy = abs(P(1, i) - cy);
++            if ((P(2, i) - cy)^2 >= miniy^2)
++                miniy = abs(P(2, i) - cy);
+             end
+         end
+-        for i = 1:n
+-            x(i, 1:m) = i;
+-        end
+         for i = 1:m
+-            y(1:n, i) = i;
++            x(1:n, i) = i;
++        end
++        for i = 1:n
++            y(i, 1:m) = i;
+         end
+         
+         if op == 1
+         
+-        [mask, num] = square(x, y, cx, cy, 1.5 * minix, 1.5 * miniy);
++        [mask, num] = square(y, x, cy, cx, 1.4 * miniy, 1.4 * minix);
+         figure; imshow(mask);
+-        [temp, ntemp] = square(x, y, cx, cy, 1.2 * minix, 1.2 * miniy);
++        [temp, ntemp] = square(y, x, cy, cx, 1.2 * miniy, 1.2 * minix);
+         figure; imshow(temp);
+         mask = (mask | temp) & ~(mask & temp);
+         num = num - ntemp;
+@@ -55,16 +55,14 @@ function Op = seam_search(I, filename)
+         mask2(:,:,2) = mask;
+         mask2(:,:,3) = mask;
+         mi_ta = 2 * 1.2 * minix + 2 * 1.2 * miniy;
+-        figure; imshow(uint8(mask2) .* I); %pause;
++        figure; imshow(uint8(mask2) .* I);
+         
+         else
++        [miniy, minix]
+         
+-        minix = minix * 1.3;
+-        miniy = miniy * 0.9;
+-        
+-        [mask, num] = elipse(x, y, cx, cy, minix, miniy, 1.6);
++        [mask, num] = elipse(y, x, cy, cx, miniy, minix, 1.5);
+         figure; imshow(mask);
+-        [temp, ntemp] = elipse(x, y, cx, cy, minix, miniy, 1.0);
++        [temp, ntemp] = elipse(y, x, cy, cx, miniy, minix, 1.3);
+         figure; imshow(temp);
+         
+         mask = (mask | temp) & ~(mask & temp);
+@@ -79,80 +77,71 @@ function Op = seam_search(I, filename)
+         end
+     end
+     
+-    function q = grad(I, x, y, z, w)
+-        Ia = double(I(x,y,1)) + double(I(x,y,2)) + double(I(x,y,3));
+-        Ib = double(I(z,w,1)) + double(I(z,w,2)) + double(I(z,w,3));
+-        %Mudar pra outro espaco de cores
+-        q = abs(Ib - Ia);
+-    end
+-    
+     %I eh a imagem
+     %land sao os landmarks
+     
+-    [mask, num, mintam, cen] = region(I, filename, 1);
++    [mask, num, mintam, cen, xa, yb] = region(I, filename, opt);
+     
+-    mak = mask;
+-    
+-    for k = round(cen(1)):-1:1
++    for k = 1:round(cen(1))
+         if mask(k, round(cen(2))) == 1
+             mask(k, round(cen(2))) = 0;
+             ini = [k, round(cen(2))];
+         end
+     end
+     
+-    figure; imshow(mask);
+-    
+-    %mat = zeros([num, 8]);
+-    
+-    %[lin, col] = size(mask);
+-    %vis = zeros([lin, col]);
+-    %fim = 1;
+-    
+-    %vet = size([num, 2]);
+-    
+-    v8_x = [-1, -1, -1,  0, 0,  1, 1, 1];
+-    v8_y = [-1,  0,  1, -1, 1, -1, 0, 1];
+-    
+-    %for k = 1:lin
+-    %    for l = 1:col
+-    %        if mask(k, l) == 1
+-    %            vet(fim, 1) = k;
+-    %            vet(fim, 2) = l;
+-    %            vis(k, l) = fim;
+-    %            
+-    %            for a = 1:8
+-    %                if vis(k + v8_x(a), l + v8_y(a)) ~= 0
+-    %                    tem = vis(k + v8_x(a), l + v8_y(a));
+-    %                    mat(fim, a) = grad(I, k, l, k + v8_x(a), l + v8_y(a));
+-    %                    mat(tem, 8 - a + 1) = mat(fim, a);
+-    %                end
+-    %            end
+-    %            fim = fim + 1;
+-    %        end
+-    %    end
+-    %end
+-    %figure; imshow(mat, []);
+-    %figure; imshow(double(vis), [])
+-    
+-    if mask(ini(1) - 1, ini(2)) == 1
+-        beg = [ini(1) - 1, ini(2)]
++    if mask(ini(1), ini(2) - 1) == 1
++        beg = [ini(1), ini(2) - 1];
+     else
+-        beg = [ini(1) - 1, ini(2) + 1]
++        beg = [ini(1) - 1, ini(2) - 1];
+     end
+-    if mask(ini(1) + 1, ini(2)) == 1
+-        endi = [ini(1) + 1, ini(2)]
++    if mask(ini(1), ini(2) + 1) == 1
++        endi = [ini(1), ini(2) + 1];
+     else
+-        endi = [ini(1) + 1, ini(2) + 1]
++        endi = [ini(1) - 1, ini(2) + 1];
+     end
+-    [a, b, ~] = size(rgb2gray(I));
+-
+-    route = zeros(size(mask));
+-    djikstra(beg, endi, rgb2gray(I), mask, route);
+-    pause;
++    
++    figure; imshow(mask);
++    
++    beg = int16(beg);
++    endi = int16(endi);
++    
++    mask(beg(1), beg(2))
++    mask(endi(1), endi(2))
++    
++    I_hsv = rgb2hsv(I);
++    
++    figure; imshow(I_hsv(:,:,1));
++    
++    rec1 = zeros(size(beg));
++    rec2 = zeros(size(endi));
++    rec1(:) = beg(:);
++    rec2(:) = endi(:);
++    
++    figure; imshow(mask); pause;
++    [beg; endi]
++    route =  djikstra(beg, endi, rgb2gray(I), mask);
++    [rec1; rec2]
++    figure; imshow(mask); pause;
++    route2 =  djikstra2(rec1, rec2, I_hsv(:,:,1), mask);
++    
+     route(ini(1), ini(2)) = 1;
++    figure; imshow(route, []);
++    figure; imshow(route2, []); pause;
++    
++    mask = route;
++    
++    mak = mask;
++    
+     mak = imfill(mak, 'holes');
++    
++    figure; imshow(mak);
++    
+     Op(:,:,1) = uint8(mak) .* I(:,:,1);
+     Op(:,:,2) = uint8(mak) .* I(:,:,2);
+     Op(:,:,3) = uint8(mak) .* I(:,:,3);
+     
++    figure; imshow(Op);
++    
++    cen = round(cen);
++    
+ end
